@@ -6,7 +6,7 @@ End-to-end fund analysis pipeline:
 2. **Reconciling prices** - Compares fund-reported prices with reference database prices using forward-fill logic for missing dates
 3. **Calculating performance** - Identifies best-performing fund each month using rate of return (ROR = (end_MV - start_MV + realized_PL) / start_MV)
 
-## Quick Start (2 commands)
+## Quick Start
 
 ```bash
 cd solution
