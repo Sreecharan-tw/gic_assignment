@@ -2,8 +2,6 @@
 .git.backup-*
 
 # Generated artifacts — rebuilt by `make run`
-solution/funds_analysis.db
-solution/output/*.csv
 solution/pipeline.log
 
 # Test artifacts — rebuilt by `make test`
