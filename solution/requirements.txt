@@ -1,0 +1,3 @@
+# For development/testing only:
+pytest>=9.0.0
+pytest-cov>=4.0.0  # Optional: for coverage reports

@@ -1,0 +1,24 @@
+# Preserved old repository (not part of this history)
+.git.backup-*
+
+# Generated artifacts — rebuilt by `make run`
+solution/funds_analysis.db
+solution/output/*.csv
+solution/pipeline.log
+
+# Test artifacts — rebuilt by `make test`
+solution/tests/htmlcov/
+.pytest_cache/
+.coverage
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
