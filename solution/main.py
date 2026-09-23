@@ -36,6 +36,11 @@ class FundAnalysisPipeline:
             self.db.setup_from_sql(str(sql_file))
             print("Reference data loaded successfully")
 
+            # Must run before create_indexes() so the index is built once,
+            # over final values, rather than churning on every rewrite.
+            normalized = self.db.normalize_reference_dates()
+            print(f"Normalized {normalized} equity price dates to ISO format")
+
             print("[3/5] Creating fund positions table and indexes...")
             self.db.create_fund_positions_table()
             self.db.create_indexes()

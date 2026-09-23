@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -55,6 +56,41 @@ class Database:
         cursor = self.connection.cursor()
         cursor.executescript(sql_script)
         self.commit()
+
+    def normalize_reference_dates(self) -> int:
+        """
+        Rewrite equity_prices.DATETIME from M/D/YYYY to YYYY-MM-DD.
+
+        Idempotent: rows already in ISO form are left alone.
+        Returns the number of rows rewritten.
+        """
+        stale = [
+            row[0] for row in self.fetch_all(
+                "SELECT DISTINCT DATETIME FROM equity_prices WHERE DATETIME LIKE '%/%'"
+            )
+        ]
+        if not stale:
+            return 0
+
+        # Only a few hundred distinct dates cover all rows, so update by value.
+        updated = 0
+        for original in stale:
+            try:
+                iso = datetime.strptime(original, '%m/%d/%Y').strftime('%Y-%m-%d')
+            except ValueError as e:
+                raise ValueError(
+                    f"equity_prices.DATETIME value {original!r} is not M/D/YYYY. "
+                    f"Reference dates must be normalised before price lookup, so "
+                    f"this cannot be skipped."
+                ) from e
+            cursor = self.execute(
+                "UPDATE equity_prices SET DATETIME = ? WHERE DATETIME = ?",
+                (iso, original)
+            )
+            updated += cursor.rowcount
+
+        self.commit()
+        return updated
 
     def create_fund_positions_table(self):
         """Create table to store fund position data."""

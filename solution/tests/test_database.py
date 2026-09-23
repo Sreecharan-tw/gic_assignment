@@ -26,19 +26,19 @@ class TestDatabase(unittest.TestCase):
 
     def test_database_connection(self):
         """Test database connection."""
-        self.assertIsNotNone(self.db.connection)
-        self.assertIsInstance(self.db.connection, sqlite3.Connection)
+        assert self.db.connection is not None
+        assert isinstance(self.db.connection, sqlite3.Connection)
 
     def test_create_fund_positions_table(self):
         """Test fund_positions table creation."""
         self.db.create_fund_positions_table()
-        self.assertTrue(self.db.table_exists('fund_positions'))
+        assert self.db.table_exists('fund_positions')
 
     def test_table_count(self):
         """Test row counting in tables."""
         self.db.create_fund_positions_table()
         count = self.db.get_table_count('fund_positions')
-        self.assertEqual(count, 0)
+        assert count == 0
 
     def test_execute_and_fetch(self):
         """Test execute and fetch operations."""
@@ -56,10 +56,10 @@ class TestDatabase(unittest.TestCase):
 
         # Fetch and verify
         result = self.db.fetch_one("SELECT * FROM fund_positions WHERE fund_name = ?", ('TestFund',))
-        self.assertIsNotNone(result)
-        self.assertEqual(result['fund_name'], 'TestFund')
-        self.assertEqual(result['symbol'], 'AAPL')
-        self.assertEqual(result['price'], 150.0)
+        assert result is not None
+        assert result['fund_name'] == 'TestFund'
+        assert result['symbol'] == 'AAPL'
+        assert result['price'] == 150.0
 
     def test_fetch_all(self):
         """Test fetching multiple rows."""
@@ -79,7 +79,7 @@ class TestDatabase(unittest.TestCase):
 
         # Fetch all
         results = self.db.fetch_all("SELECT * FROM fund_positions WHERE eom_date = ?", ('2023-01-31',))
-        self.assertEqual(len(results), 3)
+        assert len(results) == 3
 
     def test_unique_constraint(self):
         """Test unique constraint on fund_positions."""
@@ -102,14 +102,14 @@ class TestDatabase(unittest.TestCase):
 
         # Verify only one record exists
         count = self.db.get_table_count('fund_positions')
-        self.assertEqual(count, 1)
+        assert count == 1
 
         # Verify it has the updated price
         result = self.db.fetch_one(
             "SELECT price FROM fund_positions WHERE fund_name = ? AND symbol = ?",
             ('Fund1', 'AAPL')
         )
-        self.assertEqual(result[0], 155.0)
+        assert result[0] == 155.0
 
 
 if __name__ == '__main__':

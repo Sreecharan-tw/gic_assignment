@@ -13,24 +13,41 @@ class PriceReconciliation:
         Used by both reconciliation and stats queries.
         """
         return """
-        WITH ref_prices AS (
+        WITH ref_lookup AS (
             SELECT
                 fp.id,
-                fp.symbol,
-                fp.eom_date,
-                COALESCE(
-                    (SELECT ep.PRICE
-                     FROM equity_prices ep
-                     WHERE ep.SYMBOL = fp.symbol
-                     AND ep.DATETIME <= fp.eom_date
-                     ORDER BY ep.DATETIME DESC LIMIT 1),
-                    (SELECT bp.PRICE
-                     FROM bond_prices bp
-                     WHERE bp.ISIN = fp.symbol
-                     AND bp.DATETIME <= fp.eom_date
-                     ORDER BY bp.DATETIME DESC LIMIT 1)
-                ) as reference_price
+                (SELECT ep.PRICE
+                 FROM equity_prices ep
+                 WHERE ep.SYMBOL = fp.symbol
+                 AND ep.DATETIME <= fp.eom_date
+                 ORDER BY ep.DATETIME DESC LIMIT 1) as eq_price,
+                (SELECT ep.DATETIME
+                 FROM equity_prices ep
+                 WHERE ep.SYMBOL = fp.symbol
+                 AND ep.DATETIME <= fp.eom_date
+                 ORDER BY ep.DATETIME DESC LIMIT 1) as eq_date,
+                (SELECT bp.PRICE
+                 FROM bond_prices bp
+                 WHERE bp.ISIN = fp.symbol
+                 AND bp.DATETIME <= fp.eom_date
+                 ORDER BY bp.DATETIME DESC LIMIT 1) as bond_price,
+                (SELECT bp.DATETIME
+                 FROM bond_prices bp
+                 WHERE bp.ISIN = fp.symbol
+                 AND bp.DATETIME <= fp.eom_date
+                 ORDER BY bp.DATETIME DESC LIMIT 1) as bond_date
             FROM fund_positions fp
+        ),
+        ref_prices AS (
+            SELECT
+                id,
+                COALESCE(eq_price, bond_price) as reference_price,
+                COALESCE(eq_date, bond_date) as reference_price_date,
+                CASE
+                    WHEN eq_price IS NOT NULL THEN 'equity'
+                    WHEN bond_price IS NOT NULL THEN 'bond'
+                END as reference_source
+            FROM ref_lookup
         )
         """
 
@@ -53,6 +70,10 @@ class PriceReconciliation:
             fp.security_name,
             fp.price as fund_price,
             rp.reference_price,
+            rp.reference_price_date,
+            rp.reference_source,
+            CAST(julianday(fp.eom_date) - julianday(rp.reference_price_date) AS INTEGER)
+                as staleness_days,
             ROUND(fp.price - rp.reference_price, 4) as price_difference,
             ROUND((fp.price - rp.reference_price) / rp.reference_price * 100, 4) as price_difference_pct,
             fp.quantity,

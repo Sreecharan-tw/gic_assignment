@@ -81,17 +81,17 @@ class TestFundPerformance(unittest.TestCase):
 
         result = self.performance.generate_performance_report(str(output_path))
 
-        self.assertIn("output_file", result)
-        self.assertIn("stats", result)
-        self.assertTrue(output_path.exists())
+        assert "output_file" in result
+        assert "stats" in result
+        assert output_path.exists()
 
         # Verify report structure
         with open(output_path) as f:
             first_line = f.readline()
-            self.assertIn("eom_date", first_line)
-            self.assertIn("fund_name", first_line)
-            self.assertIn("is_best_performer", first_line)
-            self.assertIn("rate_of_return", first_line)
+            assert "eom_date" in first_line
+            assert "fund_name" in first_line
+            assert "is_best_performer" in first_line
+            assert "rate_of_return" in first_line
 
         # Cleanup
         output_path.unlink()
@@ -117,8 +117,8 @@ class TestFundPerformance(unittest.TestCase):
                 if row['eom_date'] == '2023-01-31':
                     january_found = True
 
-        self.assertTrue(best_found, "FundA should be best performer in February")
-        self.assertFalse(january_found, "January should not be in report (no prior month for ROR calculation)")
+        assert best_found, "FundA should be best performer in February"
+        assert not january_found, "January should not be in report (no prior month for ROR calculation)"
 
         # Cleanup
         output_path.unlink()

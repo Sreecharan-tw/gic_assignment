@@ -36,16 +36,14 @@ class FundPerformance:
                     WHEN prev_month_market_value IS NOT NULL AND prev_month_market_value != 0
                     THEN (total_market_value - prev_month_market_value + total_realised_pl) / prev_month_market_value
                     ELSE NULL
-                END as rate_of_return,
-                RANK() OVER (PARTITION BY eom_date ORDER BY
-                    CASE
-                        WHEN prev_month_market_value IS NOT NULL AND prev_month_market_value != 0
-                        THEN (total_market_value - prev_month_market_value + total_realised_pl) / prev_month_market_value
-                        ELSE -999999
-                    END DESC
-                ) as performance_rank
+                END as rate_of_return
             FROM monthly_metrics
-        )
+        ),
+        performance_ranking AS (
+            SELECT *, 
+                RANK() OVER (PARTITION BY eom_date ORDER BY rate_of_return DESC) as performance_rank
+            FROM performance_metrics
+            )
         SELECT
             eom_date,
             fund_name,
@@ -55,7 +53,7 @@ class FundPerformance:
             ROUND(rate_of_return, 6) as rate_of_return,
             ROUND(rate_of_return * 100, 2) as rate_of_return_pct,
             CASE WHEN performance_rank = 1 THEN 1 ELSE 0 END as is_best_performer
-        FROM performance_metrics
+        FROM performance_ranking
         WHERE rate_of_return IS NOT NULL
         ORDER BY eom_date, performance_rank
         """

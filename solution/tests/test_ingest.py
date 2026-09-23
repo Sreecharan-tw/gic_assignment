@@ -31,82 +31,82 @@ class TestDataIngestion(unittest.TestCase):
         """Test date parsing with dash separator."""
         filename = "Applebead.31-08-2022 breakdown.csv"
         date = self.ingest.parse_date_from_filename(filename)
-        self.assertEqual(date, "2022-08-31")
+        assert date == "2022-08-31"
 
     def test_parse_date_from_filename_underscore_separator(self):
         """Test date parsing with underscore separator."""
         filename = "Belaware.31_01_2023.csv"
         date = self.ingest.parse_date_from_filename(filename)
-        self.assertEqual(date, "2023-01-31")
+        assert date == "2023-01-31"
 
     def test_parse_date_from_filename_yyyymmdd(self):
         """Test date parsing with YYYYMMDD format."""
         filename = "TT_monthly_Trustmind.20220831.csv"
         date = self.ingest.parse_date_from_filename(filename)
-        self.assertEqual(date, "2022-08-31")
+        assert date == "2022-08-31"
 
     def test_parse_date_from_filename_yyyy_mm_dd(self):
         """Test date parsing with YYYY-MM-DD format."""
         filename = "rpt-Catalysm.2022-08-31.csv"
         date = self.ingest.parse_date_from_filename(filename)
-        self.assertEqual(date, "2022-08-31")
+        assert date == "2022-08-31"
 
     def test_parse_date_from_filename_mm_dd_yyyy(self):
         """Test date parsing with MM-DD-YYYY format."""
         filename = "Report-of-Gohen.01-31-2023.csv"
         date = self.ingest.parse_date_from_filename(filename)
-        self.assertEqual(date, "2023-01-31")
+        assert date == "2023-01-31"
 
     def test_parse_fund_name(self):
         """Test fund name extraction."""
         filename = "Applebead.31-08-2022 breakdown.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Applebead")
+        assert fund_name == "Applebead"
 
     def test_parse_fund_name_with_prefix(self):
         """Test fund name extraction with Report-of- prefix."""
         filename = "Report-of-Gohen.01-31-2023.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Gohen")
+        assert fund_name == "Gohen"
 
     def test_parse_fund_name_with_rpt_prefix(self):
         """Test fund name extraction with rpt- prefix."""
         filename = "rpt-Catalysm.2022-08-31.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Catalysm")
+        assert fund_name == "Catalysm"
 
     def test_parse_fund_name_with_tt_prefix(self):
         """Test fund name extraction with TT_monthly_ prefix."""
         filename = "TT_monthly_Trustmind.20220831.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Trustmind")
+        assert fund_name == "Trustmind"
 
     def test_parse_fund_name_with_fund_prefix(self):
         """Test fund name extraction with Fund prefix."""
         filename = "Fund Whitestone.30-06-2023 - details.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Whitestone")
+        assert fund_name == "Whitestone"
 
     def test_parse_fund_name_with_mend_report_prefix(self):
         """Test fund name extraction with mend-report prefix."""
         filename = "mend-report Wallington.30_06_2023.csv"
         fund_name = self.ingest.parse_fund_name(filename)
-        self.assertEqual(fund_name, "Wallington")
+        assert fund_name == "Wallington"
 
     def test_parse_float_valid(self):
         """Test float parsing with valid value."""
         result = DataIngestion._parse_float("123.45")
-        self.assertEqual(result, 123.45)
+        assert result == 123.45
 
     def test_parse_float_empty(self):
         """Test float parsing with empty value."""
         result = DataIngestion._parse_float("")
-        self.assertIsNone(result)
+        assert result is None
 
     def test_parse_float_invalid(self):
         """Test float parsing with invalid value."""
         result = DataIngestion._parse_float("abc")
-        self.assertIsNone(result)
+        assert result is None
 
     def test_ingest_csv_file(self):
         """Test ingesting a single CSV file."""
@@ -139,10 +139,10 @@ class TestDataIngestion(unittest.TestCase):
         # Ingest
         fund_name, eom_date, positions = self.ingest.ingest_csv_file(renamed_path)
 
-        self.assertEqual(fund_name, "TestFund")
-        self.assertEqual(eom_date, "2023-01-31")
-        self.assertEqual(len(positions), 1)
-        self.assertEqual(positions[0]['SYMBOL'], 'AAPL')
+        assert fund_name == "TestFund"
+        assert eom_date == "2023-01-31"
+        assert len(positions) == 1
+        assert positions[0]['SYMBOL'] == 'AAPL'
 
         # Cleanup
         renamed_path.unlink()
@@ -176,15 +176,15 @@ class TestDataIngestion(unittest.TestCase):
 
         # Verify
         count = self.db.get_table_count('fund_positions')
-        self.assertEqual(count, 2)
+        assert count == 2
 
         result = self.db.fetch_one(
             "SELECT * FROM fund_positions WHERE symbol = ?",
             ('AAPL',)
         )
-        self.assertIsNotNone(result)
-        self.assertEqual(result['price'], 150.0)
-        self.assertEqual(result['quantity'], 100.0)
+        assert result is not None
+        assert result['price'] == 150.0
+        assert result['quantity'] == 100.0
 
     def test_handle_null_sedol(self):
         """Test handling of null SEDOL values."""
@@ -207,7 +207,7 @@ class TestDataIngestion(unittest.TestCase):
             "SELECT sedol FROM fund_positions WHERE symbol = ?",
             ('AAPL',)
         )
-        self.assertIsNone(result[0])
+        assert result[0] is None
 
 
 if __name__ == '__main__':
