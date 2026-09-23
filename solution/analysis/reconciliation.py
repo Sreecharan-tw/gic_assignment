@@ -1,4 +1,5 @@
 import csv
+from datetime import date
 from pathlib import Path
 from typing import Dict
 
@@ -72,8 +73,6 @@ class PriceReconciliation:
             rp.reference_price,
             rp.reference_price_date,
             rp.reference_source,
-            CAST(julianday(fp.eom_date) - julianday(rp.reference_price_date) AS INTEGER)
-                as staleness_days,
             ROUND(fp.price - rp.reference_price, 4) as price_difference,
             ROUND((fp.price - rp.reference_price) / rp.reference_price * 100, 4) as price_difference_pct,
             fp.quantity,
