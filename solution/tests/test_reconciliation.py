@@ -275,7 +275,13 @@ class TestReferencePriceDateFormat(unittest.TestCase):
 
     @staticmethod
     def _parse(date_str):
-        """Parse either ISO or M/D/YYYY."""
+        """Parse ISO or M/D/YYYY.
+
+        Post-normalisation everything is ISO, so the M/D/YYYY branch is only
+        reached if normalisation regresses - in which case parsing the leaked
+        value lets the assertion report the real problem rather than dying
+        on a format error.
+        """
         for fmt in ('%Y-%m-%d', '%m/%d/%Y'):
             try:
                 return datetime.strptime(date_str, fmt).date()
