@@ -72,8 +72,7 @@ class Database:
         if not stale:
             return 0
 
-        # Only a few hundred distinct dates cover all rows, so update by value.
-        updated = 0
+        mapping = []
         for original in stale:
             try:
                 iso = datetime.strptime(original, '%m/%d/%Y').strftime('%Y-%m-%d')
@@ -83,11 +82,24 @@ class Database:
                     f"Reference dates must be normalised before price lookup, so "
                     f"this cannot be skipped."
                 ) from e
-            cursor = self.execute(
-                "UPDATE equity_prices SET DATETIME = ? WHERE DATETIME = ?",
-                (iso, original)
-            )
-            updated += cursor.rowcount
+            mapping.append((original, iso))
+
+        # A few hundred distinct dates cover all 128k rows. Applying them as one
+        # set-based UPDATE rather than one statement per value avoids repeatedly
+        # rewriting the (DATETIME, SYMBOL) primary key and the symbol/date index,
+        # which DATETIME leads in both.
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "CREATE TEMP TABLE date_map (old TEXT PRIMARY KEY, new TEXT NOT NULL)"
+        )
+        cursor.executemany("INSERT INTO date_map VALUES (?, ?)", mapping)
+        cursor.execute("""
+            UPDATE equity_prices
+               SET DATETIME = (SELECT new FROM date_map WHERE old = DATETIME)
+             WHERE DATETIME IN (SELECT old FROM date_map)
+        """)
+        updated = cursor.rowcount
+        cursor.execute("DROP TABLE date_map")
 
         self.commit()
         return updated
